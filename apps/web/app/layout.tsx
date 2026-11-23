@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "CodEX — realtime code sharing with an AI explainer",
+    default: "CodEX — push/pull code rooms with AI",
     template: "%s · CodEX",
   },
   description:
