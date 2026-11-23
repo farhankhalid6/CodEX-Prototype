@@ -1,0 +1,33 @@
+{
+  "name": "codex-prototype",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CodEX Prototype — minimal code rooms with AI explainer, chat and explicit push/pull sync.",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "jobs/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "npm run build -w @codex/shared && npm run build -w @codex/realtime && npm run build -w @codex/web && npm run build -w @codex/cleanup",
+    "dev": "npm run build -w @codex/shared && npm-run-all --parallel dev:web dev:realtime",
+    "dev:web": "npm run dev -w @codex/web",
+    "dev:realtime": "npm run dev -w @codex/realtime",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "models:list": "node scripts/list-watsonx-models.mjs"
+  },
+  "devDependencies": {
+    "npm-run-all2": "^8.0.4",
+    "prettier": "^3.10.1",
+    "typescript": "^5.9.3"
+  },
+  "overrides": {
+    "monaco-editor": "0.56.0"
+  }
+}

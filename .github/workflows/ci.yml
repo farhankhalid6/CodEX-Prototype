@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+
+  NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co"
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: "ci-anon-key"
+  SUPABASE_SERVICE_ROLE_KEY: "ci-service-role-key"
+  ROOM_TOKEN_SECRET: "ci-room-token-secret-0123456789abcdef"
+  NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
+  NEXT_PUBLIC_REALTIME_URL: "ws://localhost:8080/ws"
+  REALTIME_ALLOWED_ORIGINS: "http://localhost:3000"
+
+jobs:
+  build:
+    name: Typecheck, test and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Build shared package
+        run: npm run build -w @codex/shared
+
+      - name: Typecheck
+        run: npm run typecheck --workspaces --if-present
+
+      - name: Unit tests
+        run: npm test --workspaces --if-present
+
+      - name: Build realtime server
+        run: npm run build -w @codex/realtime
+
+      - name: Build cleanup job
+        run: npm run build -w @codex/cleanup
+
+      - name: Build web app
+        run: npm run build -w @codex/web

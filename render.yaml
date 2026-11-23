@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: codeshare-realtime
+    runtime: node
+    plan: free
+    region: singapore
+    branch: main
+
+    buildCommand: npm ci --include=dev --no-audit --no-fund && npm run build -w @codex/shared && npm run build -w @codex/realtime
+    startCommand: npm run start -w @codex/realtime
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: ROOM_TOKEN_SECRET
+        sync: false
+      - key: REALTIME_ALLOWED_ORIGINS
+        sync: false
+      - key: LOG_LEVEL
+        value: info

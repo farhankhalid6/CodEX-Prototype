@@ -1,0 +1,30 @@
+name: Keep free services warm
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: keepalive
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    name: Ping web and realtime health endpoints
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Ping web
+        env:
+          WEB_HEALTH_URL: ${{ vars.WEB_HEALTH_URL }}
+        run: curl --fail --silent --show-error --max-time 20 "$WEB_HEALTH_URL" > /dev/null
+
+      - name: Ping realtime
+        env:
+          REALTIME_HEALTH_URL: ${{ vars.REALTIME_HEALTH_URL }}
+        run: curl --fail --silent --show-error --max-time 20 "$REALTIME_HEALTH_URL" > /dev/null

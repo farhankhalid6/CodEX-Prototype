@@ -1,0 +1,6 @@
+{
+  "framework": "nextjs",
+  "installCommand": "npm --prefix ../.. ci --no-audit --no-fund",
+  "buildCommand": "npm --prefix ../.. run build -w @codex/shared && npm run build",
+  "outputDirectory": ".next"
+}
