@@ -105,7 +105,7 @@ Language selection is also browser-local and never rewrites shared code.
 - `owner`: room creator; can rename and share.
 - `editor`: can edit the local draft and push.
 - `commentor`: can chat; cannot push.
-- `viewer`: read-only; can pull and chat when signed in.
+- `viewer`: read-only; can pull and chat without sign-in.
 
 Room and share tokens are signed with `ROOM_TOKEN_SECRET` using `jose`. The
 realtime server verifies the same secret before accepting a WebSocket upgrade.
