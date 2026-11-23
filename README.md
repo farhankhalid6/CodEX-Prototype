@@ -1,6 +1,6 @@
 # CodEX Prototype
 
-A stripped-down CodEX build: one code room, an AI explainer, signed-in chat, and
+A stripped-down CodEX build: one code room, an AI explainer, email-free chat, and
 **explicit push / pull** code sync. It is published from a separate public repo so
 the main CodEX application and its Vercel deployment stay untouched.
 
@@ -17,7 +17,7 @@ Engine, and no paid container host are required.
 | Code sync    | Push writes the draft to the room; Pull replaces the draft from the room   |
 | Languages    | `java`, `html`, `c`, `cpp`, `javascript`, `markdown` (`md`), `sql`, `text` |
 | AI explainer | Explain, find bugs, suggest comments — streamed and **read-only**          |
-| Chat         | Live WebSocket chat for signed-in participants                             |
+| Chat         | Live WebSocket chat for link holders — no email or account needed          |
 | Sharing      | Viewer / commentor / editor links, signed room tokens, expiring rooms      |
 | Dashboard    | Signed-in room list with search, rename and delete                         |
 | Ops          | Health endpoints, cleanup job, keep-warm workflow                          |

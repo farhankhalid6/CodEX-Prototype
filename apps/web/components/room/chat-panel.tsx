@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import {
   CHAT_KEEP_PER_ROOM,
@@ -9,13 +8,11 @@ import {
   encodeChat,
   type ChatEntry,
 } from "@codex/shared";
-import { IconArrowRight, IconChat, IconLock } from "@/components/icons";
+import { IconArrowRight, IconChat } from "@/components/icons";
 
 interface Props {
-  slug: string;
   provider: { ws: WebSocket | null } | null;
   status: string;
-  signedIn: boolean;
   name: string;
 }
 
@@ -35,7 +32,7 @@ function timeLabel(value: string): string {
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
-export function ChatPanel({ slug, provider, status, signedIn, name }: Props) {
+export function ChatPanel({ provider, status, name }: Props) {
   const [messages, setMessages] = useState<ChatEntry[]>([]);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -72,7 +69,7 @@ export function ChatPanel({ slug, provider, status, signedIn, name }: Props) {
 
   function send() {
     const text = draft.trim();
-    if (!text || !signedIn) return;
+    if (!text) return;
 
     const ws = provider?.ws;
     if (!ws || ws.readyState !== WebSocket.OPEN) {
@@ -97,28 +94,6 @@ export function ChatPanel({ slug, provider, status, signedIn, name }: Props) {
     }
   }
 
-  if (!signedIn) {
-    return (
-      <div className="flex h-full flex-col items-center justify-center px-4 text-center">
-        <span className="grid size-11 place-items-center rounded-2xl border border-line bg-panel2 text-muted">
-          <IconLock width={19} height={19} />
-        </span>
-        <h3 className="mt-4 text-sm font-semibold">Sign in to chat</h3>
-        <p className="mt-1.5 max-w-[260px] text-xs leading-relaxed text-muted">
-          Room chat is available to signed-in participants and stays live while this session is
-          open.
-        </p>
-        <Link
-          href={`/login?next=${encodeURIComponent(`/r/${slug}`)}`}
-          className="btn btn-primary mt-4 gap-1.5"
-        >
-          Sign in with email
-          <IconArrowRight width={14} height={14} />
-        </Link>
-      </div>
-    );
-  }
-
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex items-center justify-between gap-2 border-b border-line pb-2.5">
@@ -137,7 +112,8 @@ export function ChatPanel({ slug, provider, status, signedIn, name }: Props) {
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto py-3">
         {messages.length === 0 ? (
           <p className="pt-8 text-center text-xs leading-relaxed text-muted">
-            No messages yet. Chat is live for everyone in this room and clears when the room closes.
+            No messages yet. No email needed — chat is live for everyone in this room and clears
+            when the room closes.
           </p>
         ) : null}
 

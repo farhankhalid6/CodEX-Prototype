@@ -129,7 +129,7 @@ The web response should show `"database":true` and `"aiConfigured":true`. The
 realtime response should show `"ok":true`. Then open the same room in two
 windows:
 
-- chat stays live for signed-in users,
+- chat stays live for link holders without an email or account,
 - typing in one window does **not** change the other editor,
 - pressing **Push** in one window updates the room text,
 - pressing **Pull** in the other window updates that local draft,

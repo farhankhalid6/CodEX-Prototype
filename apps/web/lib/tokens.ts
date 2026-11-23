@@ -6,11 +6,11 @@ export async function mintRoomToken(
   role: RoomRole,
   sub: string,
   name?: string,
-  signedIn = false,
+  chatCapable = false,
 ): Promise<string> {
   return signRoomToken(
     env("ROOM_TOKEN_SECRET"),
-    { sub, room: roomId, role, name, signedIn },
+    { sub, room: roomId, role, name, signedIn: chatCapable },
     ROOM_TOKEN_TTL_SECONDS,
   );
 }

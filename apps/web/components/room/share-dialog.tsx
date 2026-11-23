@@ -146,8 +146,9 @@ export function ShareDialog({ open, onClose, slug, token, onCopied }: Props) {
 
         <p className="mt-2 text-[11px] leading-relaxed text-muted">
           {access === "viewer" && "They can read the code but cannot change it."}
-          {access === "commentor" && "Code stays read-only; chat works once they sign in."}
-          {access === "editor" && "They can edit the shared document with live cursors."}
+          {access === "commentor" &&
+            "Code stays read-only; chat works without an account or email."}
+          {access === "editor" && "They can edit the shared document; code syncs when they push."}
         </p>
 
         <label className="mt-4 block text-[11px] font-medium tracking-wide text-muted uppercase">

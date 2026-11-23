@@ -11,7 +11,7 @@ CodEX Prototype has four user-facing job stories:
 2. Edit a private Monaco draft locally.
 3. Push that draft to the room, or pull the room code back into the draft, on
    demand.
-4. Ask watsonx.ai about a selection and chat with signed-in participants.
+4. Ask watsonx.ai about a selection and chat with everyone in the room — no email needed.
 
 There is no code execution, live preview, version history, COS snapshot mirror,
 remote-cursor UI, or Git branch/commit/PR workflow. The AI never edits code.
@@ -88,8 +88,10 @@ Safety rules:
 - persists debounced Yjs room state to Supabase with the service role,
 - rejects upgrades from origins outside `REALTIME_ALLOWED_ORIGINS`.
 
-Because chat uses the same WebSocket, signed-in chat continues to work without
-any code auto-sync.
+Because chat uses the same WebSocket, every valid room participant can chat
+without an email or account, and no code auto-sync is involved. The room token's
+`signedIn` claim is used only as the realtime server's chat-capability flag in
+this prototype.
 
 ## Data model used by this prototype
 

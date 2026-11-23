@@ -1,7 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
 import type { editor as MonacoEditor } from "monaco-editor";
@@ -47,6 +55,12 @@ type Editor = MonacoEditor.IStandaloneCodeEditor;
 type ConnectionStatus = "connecting" | "connected" | "disconnected";
 type SidePanel = "ai" | "chat" | "sync";
 
+const PANEL_WIDTH_KEY = "codex:room-panel-width";
+const MIN_PANEL_WIDTH = 280;
+const MAX_PANEL_WIDTH = 640;
+const MIN_EDITOR_WIDTH = 360;
+const RESIZER_WIDTH = 8;
+
 interface Props {
   slug: string;
   initialTitle: string;
@@ -56,7 +70,6 @@ interface Props {
   displayName: string | null;
   expiresAt: string | null;
   viewKey: string | null;
-  signedIn: boolean;
   shareToken: string | null;
 }
 
@@ -92,6 +105,20 @@ function expiryLabel(expiresAt: string | null): string | null {
   return `Expires in ${days} days`;
 }
 
+function clampPanelWidth(value: number): number {
+  if (!Number.isFinite(value)) return MIN_PANEL_WIDTH;
+
+  const viewportMax =
+    typeof window === "undefined"
+      ? MAX_PANEL_WIDTH
+      : Math.min(
+          MAX_PANEL_WIDTH,
+          Math.max(MIN_PANEL_WIDTH, window.innerWidth - MIN_EDITOR_WIDTH - RESIZER_WIDTH),
+        );
+
+  return Math.min(Math.max(Math.round(value), MIN_PANEL_WIDTH), viewportMax);
+}
+
 export function RoomClient({
   slug,
   initialTitle,
@@ -101,7 +128,6 @@ export function RoomClient({
   displayName,
   expiresAt,
   viewKey,
-  signedIn,
   shareToken,
 }: Props) {
   const initial = isLanguage(initialLanguage) ? initialLanguage : DEFAULT_LANGUAGE;
@@ -125,7 +151,11 @@ export function RoomClient({
   const [code, setCode] = useState("");
   const [sharedCode, setSharedCode] = useState("");
   const [syncError, setSyncError] = useState<string | null>(null);
+  const [panelWidth, setPanelWidth] = useState(380);
+  const [panelWidthLoaded, setPanelWidthLoaded] = useState(false);
 
+  const splitRef = useRef<HTMLDivElement | null>(null);
+  const resizingRef = useRef(false);
   const clientIdRef = useRef("");
   const userNameRef = useRef(displayName ?? "");
   const codeRef = useRef("");
@@ -148,6 +178,34 @@ export function RoomClient({
   useEffect(() => {
     document.title = `${title} · CodEX`;
   }, [title]);
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(PANEL_WIDTH_KEY);
+      if (stored) setPanelWidth(clampPanelWidth(Number.parseInt(stored, 10)));
+    } catch {}
+    setPanelWidthLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!panelWidthLoaded) return;
+    try {
+      window.localStorage.setItem(PANEL_WIDTH_KEY, String(panelWidth));
+    } catch {}
+  }, [panelWidth, panelWidthLoaded]);
+
+  useEffect(() => {
+    const onResize = () => setPanelWidth((current) => clampPanelWidth(current));
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+  }, []);
 
   useEffect(() => {
     const clientId = clientIdRef.current || getClientId();
@@ -425,6 +483,48 @@ export function RoomClient({
     showToast(canEdit ? "Pulled room code into local draft" : "Room code refreshed");
   }, [canEdit, doc, showToast, slug, status]);
 
+  const startResize = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    resizingRef.current = true;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+  }, []);
+
+  const moveResize = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!resizingRef.current) return;
+    const bounds = splitRef.current?.getBoundingClientRect();
+    if (!bounds) return;
+    setPanelWidth(clampPanelWidth(bounds.right - event.clientX - RESIZER_WIDTH / 2));
+  }, []);
+
+  const stopResize = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!resizingRef.current) return;
+    resizingRef.current = false;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    document.body.style.cursor = "";
+    document.body.style.userSelect = "";
+  }, []);
+
+  const onResizeKeyDown = useCallback((event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      setPanelWidth((current) => clampPanelWidth(current + 16));
+    } else if (event.key === "ArrowRight") {
+      event.preventDefault();
+      setPanelWidth((current) => clampPanelWidth(current - 16));
+    } else if (event.key === "Home") {
+      event.preventDefault();
+      setPanelWidth(MIN_PANEL_WIDTH);
+    } else if (event.key === "End") {
+      event.preventDefault();
+      setPanelWidth((current) => clampPanelWidth(MAX_PANEL_WIDTH));
+    }
+  }, []);
+
   const expiry = expiryLabel(expiresAt);
 
   return (
@@ -532,8 +632,15 @@ export function RoomClient({
         </div>
       ) : null}
 
-      <main className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_minmax(0,42dvh)] lg:grid-cols-[minmax(0,1fr)_380px] lg:grid-rows-1">
-        <section className="relative min-h-0 border-b border-line lg:border-r lg:border-b-0">
+      <main
+        ref={splitRef}
+        className="room-split"
+        style={{ "--panel-width": `${panelWidth}px` } as CSSProperties}
+      >
+        <section
+          id="room-editor"
+          className="room-editor relative min-h-0 border-b border-line lg:border-b-0"
+        >
           <CodeEditor
             language={language}
             readOnly={!canEdit}
@@ -562,7 +669,26 @@ export function RoomClient({
           ) : null}
         </section>
 
-        <aside className="flex min-h-0 flex-col bg-elevated">
+        <div
+          className="room-resizer"
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize editor and side panel"
+          aria-controls="room-editor room-side-panel"
+          aria-valuemin={MIN_PANEL_WIDTH}
+          aria-valuemax={MAX_PANEL_WIDTH}
+          aria-valuenow={panelWidth}
+          tabIndex={0}
+          onPointerDown={startResize}
+          onPointerMove={moveResize}
+          onPointerUp={stopResize}
+          onPointerCancel={stopResize}
+          onKeyDown={onResizeKeyDown}
+        >
+          <span aria-hidden="true" />
+        </div>
+
+        <aside id="room-side-panel" className="room-side flex min-h-0 flex-col bg-elevated">
           <div className="flex shrink-0 gap-1 border-b border-line p-2">
             <button
               type="button"
@@ -601,13 +727,7 @@ export function RoomClient({
                 onSelectAll={selectAll}
               />
             ) : panel === "chat" ? (
-              <ChatPanel
-                slug={slug}
-                provider={provider}
-                status={status}
-                signedIn={signedIn}
-                name={userName}
-              />
+              <ChatPanel provider={provider} status={status} name={userName} />
             ) : (
               <PushPullPanel
                 canEdit={canEdit}

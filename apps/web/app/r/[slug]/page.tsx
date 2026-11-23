@@ -74,7 +74,6 @@ export default async function RoomPage({ params, searchParams }: PageProps) {
       displayName={await displayNameFor(user)}
       expiresAt={room.expires_at}
       viewKey={viewKey}
-      signedIn={Boolean(user)}
       shareToken={effectiveShareToken}
     />
   );

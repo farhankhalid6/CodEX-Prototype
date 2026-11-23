@@ -68,7 +68,10 @@ export async function POST(request: Request, context: RouteContext) {
 
   const sub = user?.id ?? parsed.data.clientId ?? randomUUID();
   const name = parsed.data.displayName ?? (await displayNameFor(user)) ?? undefined;
-  const token = await mintRoomToken(room.id, role, sub, name, Boolean(user));
+  // The realtime server reads this claim as its chat capability flag. In the
+  // prototype, every valid room participant can chat, including anonymous link
+  // holders. It is not an email or account verification claim.
+  const token = await mintRoomToken(room.id, role, sub, name, true);
 
   return json({
     ok: true,
